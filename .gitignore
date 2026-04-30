@@ -197,3 +197,15 @@ dist
 !.env.example
 .dev.vars*
 !.dev.vars.example
+
+### Vite / Cloudflare Workers ###
+dist/
+dist-ssr/
+.vite/
+worker-configuration.d.ts
+
+### Editor / OS ###
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+Thumbs.db

@@ -1,90 +1,92 @@
-# React + Vite + Hono + Cloudflare Workers
+# RESPEL_APP
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/vite-react-template)
+Aplicacion web para la gestion de RESPEL, construida como una SPA de React con Vite, API en Hono y despliegue en Cloudflare Workers.
 
-This template provides a minimal setup for building a React application with TypeScript and Vite, designed to run on Cloudflare Workers. It features hot module replacement, ESLint integration, and the flexibility of Workers deployments.
+## Stack
 
-![React + TypeScript + Vite + Cloudflare Workers](https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/fc7b4b62-442b-4769-641b-ad4422d74300/public)
+- React 19 + TypeScript
+- Vite
+- Hono sobre Cloudflare Workers
+- Cloudflare Static Assets para servir la SPA
+- Wrangler para desarrollo, tipos y despliegue
 
-<!-- dash-content-start -->
+## Estructura
 
-🚀 Supercharge your web development with this powerful stack:
-
-- [**React**](https://react.dev/) - A modern UI library for building interactive interfaces
-- [**Vite**](https://vite.dev/) - Lightning-fast build tooling and development server
-- [**Hono**](https://hono.dev/) - Ultralight, modern backend framework
-- [**Cloudflare Workers**](https://developers.cloudflare.com/workers/) - Edge computing platform for global deployment
-
-### ✨ Key Features
-
-- 🔥 Hot Module Replacement (HMR) for rapid development
-- 📦 TypeScript support out of the box
-- 🛠️ ESLint configuration included
-- ⚡ Zero-config deployment to Cloudflare's global network
-- 🎯 API routes with Hono's elegant routing
-- 🔄 Full-stack development setup
-- 🔎 Built-in Observability to monitor your Worker
-
-Get started in minutes with local development or deploy directly via the Cloudflare dashboard. Perfect for building modern, performant web applications at the edge.
-
-<!-- dash-content-end -->
-
-## Getting Started
-
-To start a new project with this template, run:
-
-```bash
-npm create cloudflare@latest -- --template=cloudflare/templates/vite-react-template
+```text
+src/
+  react-app/       Aplicacion React
+  worker/          Worker Hono y rutas API
+public/            Archivos publicos de Vite
+wrangler.json      Configuracion de Cloudflare Workers
 ```
 
-A live deployment of this template is available at:
-[https://react-vite-template.templates.workers.dev](https://react-vite-template.templates.workers.dev)
+La API inicial esta en `src/worker/index.ts` y expone `GET /api/`. La SPA se compila en `dist/client` y Wrangler la sirve con fallback de single-page application.
 
-## Development
+## Requisitos
 
-Install dependencies:
+- Node.js 20 o superior recomendado
+- npm
+- Cuenta de Cloudflare para desplegar con Wrangler
+
+## Instalacion
 
 ```bash
 npm install
 ```
 
-Start the development server with:
+## Desarrollo local
 
 ```bash
 npm run dev
 ```
 
-Your application will be available at [http://localhost:5173](http://localhost:5173).
+La aplicacion queda disponible normalmente en `http://localhost:5173`.
 
-## Production
+## Scripts
 
-Build your project for production:
+```bash
+npm run dev        # Servidor local de Vite con plugin de Cloudflare
+npm run build      # Compila TypeScript y genera build de produccion
+npm run lint       # Ejecuta ESLint
+npm run preview    # Build y preview local
+npm run check      # Typecheck, build y dry-run de despliegue
+npm run deploy     # Despliega a Cloudflare Workers
+npm run cf-typegen # Genera tipos de bindings con Wrangler
+```
+
+## Cloudflare Workers
+
+La configuracion principal esta en `wrangler.json`:
+
+- `name`: `respel-app`
+- `main`: `./src/worker/index.ts`
+- `assets.directory`: `./dist/client`
+- `assets.not_found_handling`: `single-page-application`
+- `compatibility_flags`: `nodejs_compat`
+
+Si se agregan bindings, variables o recursos de Cloudflare en `wrangler.json`, ejecutar:
+
+```bash
+npm run cf-typegen
+```
+
+## Despliegue
 
 ```bash
 npm run build
+npm run deploy
 ```
 
-Preview your build locally:
+Antes del primer despliegue, iniciar sesion con Wrangler si es necesario:
 
 ```bash
-npm run preview
+npx wrangler login
 ```
 
-Deploy your project to Cloudflare Workers:
+## Repositorio
 
-```bash
-npm run build && npm run deploy
+Repositorio remoto esperado:
+
+```text
+https://github.com/yersonxz116/RESPEL_APP.git
 ```
-
-Monitor your workers:
-
-```bash
-npx wrangler tail
-```
-
-## Additional Resources
-
-- [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
-- [Vite Documentation](https://vitejs.dev/guide/)
-- [React Documentation](https://reactjs.org/)
-- [Hono Documentation](https://hono.dev/)
