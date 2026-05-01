@@ -42,7 +42,7 @@ alerts.post("/category/:id/acknowledge", async (c) => {
   )
     .bind(now, id)
     .first<GeneratorCategoryAlert>();
-  if (!updated) throw new HttpError(404, "Alert not found");
+  if (!updated) throw new HttpError(404, "Alerta no encontrada");
   return c.json(updated);
 });
 
@@ -78,7 +78,7 @@ alerts.post("/storage/:id/resolve", async (c) => {
   )
     .bind(now, id)
     .first<StorageLimitAlert>();
-  if (!updated) throw new HttpError(404, "Alert not found");
+  if (!updated) throw new HttpError(404, "Alerta no encontrada");
   return c.json(updated);
 });
 

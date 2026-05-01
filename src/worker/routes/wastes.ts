@@ -46,7 +46,7 @@ wastes.get("/:id", async (c) => {
   )
     .bind(id)
     .first<WasteWithHazard>();
-  if (!row) throw new HttpError(404, "Waste not found");
+  if (!row) throw new HttpError(404, "Residuo no encontrado");
   return c.json(row);
 });
 
@@ -77,7 +77,8 @@ wastes.patch("/:id", async (c) => {
   const { id } = idParam.parse(c.req.param());
   const body = updateWasteSchema.parse(await c.req.json());
   const fields = Object.entries(body).filter(([, v]) => v !== undefined);
-  if (fields.length === 0) throw new HttpError(400, "No fields to update");
+  if (fields.length === 0)
+    throw new HttpError(400, "No hay campos para actualizar");
   const now = nowIso();
   const setSql = fields.map(([k]) => `${k} = ?`).join(", ");
   const values = fields.map(([, v]) => v as string | number | null);
@@ -86,7 +87,7 @@ wastes.patch("/:id", async (c) => {
   )
     .bind(...values, now, id)
     .first<Waste>();
-  if (!updated) throw new HttpError(404, "Waste not found");
+  if (!updated) throw new HttpError(404, "Residuo no encontrado");
   return c.json(updated);
 });
 
@@ -102,14 +103,14 @@ wastes.delete("/:id", async (c) => {
   if ((inUse?.entries ?? 0) + (inUse?.exits ?? 0) > 0) {
     throw new HttpError(
       422,
-      "Cannot delete waste with existing entries or exits",
+      "No se puede eliminar un residuo con entradas o salidas existentes",
       "waste_in_use"
     );
   }
   const result = await c.env.DB.prepare("DELETE FROM waste WHERE id = ?")
     .bind(id)
     .run();
-  if (result.meta.changes === 0) throw new HttpError(404, "Waste not found");
+  if (result.meta.changes === 0) throw new HttpError(404, "Residuo no encontrado");
   return c.body(null, 204);
 });
 

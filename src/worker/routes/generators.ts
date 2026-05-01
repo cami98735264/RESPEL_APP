@@ -21,12 +21,12 @@ generators.get("/", async (c) => {
 generators.get("/default", async (c) => {
   const id = Number(c.env.DEFAULT_GENERATOR_ID);
   if (!Number.isFinite(id) || id <= 0) {
-    throw new HttpError(500, "DEFAULT_GENERATOR_ID is not configured");
+    throw new HttpError(500, "DEFAULT_GENERATOR_ID no esta configurado");
   }
   const row = await c.env.DB.prepare("SELECT * FROM generator WHERE id = ?")
     .bind(id)
     .first<Generator>();
-  if (!row) throw new HttpError(404, "Default generator not found");
+  if (!row) throw new HttpError(404, "Generador por defecto no encontrado");
   return c.json(row);
 });
 
@@ -35,7 +35,7 @@ generators.get("/:id", async (c) => {
   const row = await c.env.DB.prepare("SELECT * FROM generator WHERE id = ?")
     .bind(id)
     .first<Generator>();
-  if (!row) throw new HttpError(404, "Generator not found");
+  if (!row) throw new HttpError(404, "Generador no encontrado");
   return c.json(row);
 });
 
@@ -73,7 +73,7 @@ generators.patch("/:id", async (c) => {
   const body = updateGeneratorSchema.parse(await c.req.json());
   const fields = Object.entries(body).filter(([, v]) => v !== undefined);
   if (fields.length === 0) {
-    throw new HttpError(400, "No fields to update");
+    throw new HttpError(400, "No hay campos para actualizar");
   }
   const now = nowIso();
   const setSql = fields.map(([k]) => `${k} = ?`).join(", ");
@@ -83,7 +83,7 @@ generators.patch("/:id", async (c) => {
   )
     .bind(...values, now, id)
     .first<Generator>();
-  if (!updated) throw new HttpError(404, "Generator not found");
+  if (!updated) throw new HttpError(404, "Generador no encontrado");
   return c.json(updated);
 });
 
@@ -95,7 +95,7 @@ generators.delete("/:id", async (c) => {
     .bind(id)
     .run();
   if (result.meta.changes === 0) {
-    throw new HttpError(404, "Generator not found");
+    throw new HttpError(404, "Generador no encontrado");
   }
   return c.body(null, 204);
 });

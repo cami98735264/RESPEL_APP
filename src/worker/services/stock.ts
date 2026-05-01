@@ -15,7 +15,11 @@ async function getHazardIdByCode(
     .bind(code)
     .first<{ id: number }>();
   if (!row) {
-    throw new HttpError(400, `Unknown hazard code: ${code}`, "unknown_hazard");
+    throw new HttpError(
+      400,
+      `Codigo de peligrosidad desconocido: ${code}`,
+      "unknown_hazard"
+    );
   }
   return row.id;
 }
@@ -48,7 +52,11 @@ export async function upsertWaste(
     .bind(args.generator_id, args.name, args.hazard_characteristic_id, now, now)
     .first<Waste>();
   if (!inserted) {
-    throw new HttpError(500, "Failed to upsert waste", "waste_upsert_failed");
+    throw new HttpError(
+      500,
+      "No se pudo registrar el residuo",
+      "waste_upsert_failed"
+    );
   }
   return inserted;
 }
@@ -117,7 +125,11 @@ export async function insertWasteEntry(
 
   const entry = (insertResult.results as WasteEntry[])[0];
   if (!entry) {
-    throw new HttpError(500, "Insert returned no row", "entry_insert_failed");
+    throw new HttpError(
+      500,
+      "La insercion no devolvio registros",
+      "entry_insert_failed"
+    );
   }
 
   const refreshedWaste = await db
@@ -160,12 +172,12 @@ export async function insertWasteExit(
     .bind(input.receptor_id)
     .first<{ is_active: number }>();
   if (!receptor) {
-    throw new HttpError(404, "Receptor not found", "receptor_not_found");
+    throw new HttpError(404, "Gestor no encontrado", "receptor_not_found");
   }
   if (receptor.is_active !== 1) {
     throw new HttpError(
       422,
-      `Receptor ${input.receptor_id} is not active`,
+      `El gestor ${input.receptor_id} no esta activo`,
       "receptor_inactive"
     );
   }
@@ -175,19 +187,19 @@ export async function insertWasteExit(
     .bind(input.waste_id)
     .first<Waste>();
   if (!waste) {
-    throw new HttpError(404, "Waste not found", "waste_not_found");
+    throw new HttpError(404, "Residuo no encontrado", "waste_not_found");
   }
   if (waste.generator_id !== input.generator_id) {
     throw new HttpError(
       422,
-      "Waste does not belong to this generator",
+      "El residuo no pertenece a este generador",
       "waste_generator_mismatch"
     );
   }
   if (waste.current_stock_kg < weight) {
     throw new HttpError(
       422,
-      `Insufficient stock for waste_id ${input.waste_id}. Available: ${waste.current_stock_kg} kg, requested: ${weight} kg.`,
+      `Stock insuficiente para el residuo ${input.waste_id}. Disponible: ${waste.current_stock_kg} kg, solicitado: ${weight} kg.`,
       "insufficient_stock"
     );
   }
@@ -226,7 +238,11 @@ export async function insertWasteExit(
 
   const exit = (insertResult.results as WasteExit[])[0];
   if (!exit) {
-    throw new HttpError(500, "Insert returned no row", "exit_insert_failed");
+    throw new HttpError(
+      500,
+      "La insercion no devolvio registros",
+      "exit_insert_failed"
+    );
   }
 
   const refreshedWaste = await db

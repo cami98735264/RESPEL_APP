@@ -27,7 +27,7 @@ receptors.get("/:id", async (c) => {
   )
     .bind(id)
     .first<AuthorizedReceptor>();
-  if (!row) throw new HttpError(404, "Receptor not found");
+  if (!row) throw new HttpError(404, "Gestor no encontrado");
   return c.json(row);
 });
 
@@ -64,7 +64,8 @@ receptors.patch("/:id", async (c) => {
   const { id } = idParam.parse(c.req.param());
   const body = updateReceptorSchema.parse(await c.req.json());
   const fields = Object.entries(body).filter(([, v]) => v !== undefined);
-  if (fields.length === 0) throw new HttpError(400, "No fields to update");
+  if (fields.length === 0)
+    throw new HttpError(400, "No hay campos para actualizar");
   const now = nowIso();
   const setSql = fields.map(([k]) => `${k} = ?`).join(", ");
   const values = fields.map(([, v]) => v as string | number | null);
@@ -73,7 +74,7 @@ receptors.patch("/:id", async (c) => {
   )
     .bind(...values, now, id)
     .first<AuthorizedReceptor>();
-  if (!updated) throw new HttpError(404, "Receptor not found");
+  if (!updated) throw new HttpError(404, "Gestor no encontrado");
   return c.json(updated);
 });
 
@@ -85,7 +86,7 @@ receptors.delete("/:id", async (c) => {
     .bind(id)
     .run();
   if (result.meta.changes === 0) {
-    throw new HttpError(404, "Receptor not found");
+    throw new HttpError(404, "Gestor no encontrado");
   }
   return c.body(null, 204);
 });

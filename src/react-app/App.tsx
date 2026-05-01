@@ -3,6 +3,7 @@ import { AppShell } from './shared/layout/AppShell';
 import { EntradaPage, ResiduosPage, SalidaPage } from './features/residuos';
 import { DashboardPage } from './features/dashboard';
 import { ReportesPage } from './features/reportes';
+import { GestoresPage } from './features/gestores';
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
           <Route path="/entrada" element={<EntradaPage />} />
           <Route path="/salida" element={<SalidaPage />} />
           <Route path="/residuos" element={<ResiduosPage />} />
+          <Route path="/gestores" element={<GestoresPage />} />
           <Route path="/reportes" element={<ReportesPage />} />
         </Route>
       </Routes>

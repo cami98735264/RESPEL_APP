@@ -1,28 +1,8 @@
 import { NavLink } from "react-router-dom";
-import {
-  LayoutDashboard,
-  PackagePlus,
-  Truck,
-  Boxes,
-  FileBarChart2,
-  Leaf,
-} from "lucide-react";
+import { Leaf } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGenerator } from "./GeneratorContext";
-
-const NAV_ITEMS = [
-  { to: "/dashboard", label: "Resumen", icon: LayoutDashboard },
-  { to: "/entrada", label: "Entrada", icon: PackagePlus },
-  { to: "/salida", label: "Salida", icon: Truck },
-  { to: "/residuos", label: "Stock", icon: Boxes },
-  { to: "/reportes", label: "Reportes", icon: FileBarChart2 },
-];
-
-const CATEGORY_LABEL: Record<number, string> = {
-  1: "Pequeno",
-  2: "Mediano",
-  3: "Grande",
-};
+import { CATEGORY_LABEL, NAV_ITEMS } from "./nav-items";
 
 export function Sidebar() {
   const { generator } = useGenerator();

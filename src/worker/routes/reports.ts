@@ -51,7 +51,7 @@ reports.get("/entries", async (c) => {
     Object.fromEntries(new URL(c.req.url).searchParams)
   );
   if (!parsed.success) {
-    throw new HttpError(400, parsed.error.issues[0]?.message ?? "Invalid query");
+    throw new HttpError(400, parsed.error.issues[0]?.message ?? "Consulta invalida");
   }
   const { sql, binds } = buildPeriodFilter(parsed.data);
   const { results } = await c.env.DB.prepare(
@@ -67,7 +67,7 @@ reports.get("/exits", async (c) => {
     Object.fromEntries(new URL(c.req.url).searchParams)
   );
   if (!parsed.success) {
-    throw new HttpError(400, parsed.error.issues[0]?.message ?? "Invalid query");
+    throw new HttpError(400, parsed.error.issues[0]?.message ?? "Consulta invalida");
   }
   const { sql, binds } = buildPeriodFilter(parsed.data);
   const { results } = await c.env.DB.prepare(

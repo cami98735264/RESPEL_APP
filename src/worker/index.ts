@@ -1,3 +1,4 @@
+import "@shared/i18n/zod-spanish";
 import { Hono } from "hono";
 import { fkPragma } from "./middleware/fkPragma";
 import { errorHandler } from "./middleware/error";

@@ -63,7 +63,9 @@
       "Bash(curl -sS -X POST \"http://127.0.0.1:8788/cdn-cgi/mf/scheduled\" -i)",
       "Bash(curl -sS 'https://respel-app.mashlowtm0510.workers.dev/api/reports/entries?period=annual&year=2026&generator_id=1')",
       "Bash(xargs echo *)",
-      "Bash(curl -sS 'https://respel-app.mashlowtm0510.workers.dev/api/receptors?active=1')"
+      "Bash(curl -sS 'https://respel-app.mashlowtm0510.workers.dev/api/receptors?active=1')",
+      "Bash(npm install *)",
+      "Bash(timeout 12 sh -c 'until grep -q \"Local:\" \"/c/Users/ADMINI~1/AppData/Local/Temp/claude/c--Users-Administrador-R-Desktop-respe-app/40b781bc-9979-4731-98f6-7336642bd373/tasks/bj8mo27xo.output\" 2>/dev/null; do sleep 1; done')"
     ]
   }
 }

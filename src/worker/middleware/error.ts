@@ -17,22 +17,40 @@ export const errorHandler: ErrorHandler<{ Bindings: Env }> = (err, c) => {
 
   if (err instanceof ZodError) {
     return c.json(
-      { error: "Validation failed", issues: err.issues },
+      { error: "La validacion fallo", issues: err.issues },
       400
     );
   }
 
   const msg = err.message ?? "";
   if (msg.includes("CHECK constraint failed")) {
-    return c.json({ error: msg, code: "check_constraint" }, 422);
+    return c.json(
+      {
+        error: "Restriccion de validacion violada en la base de datos.",
+        code: "check_constraint",
+      },
+      422
+    );
   }
   if (msg.includes("FOREIGN KEY constraint failed")) {
-    return c.json({ error: msg, code: "fk_constraint" }, 422);
+    return c.json(
+      {
+        error: "Restriccion de clave foranea violada en la base de datos.",
+        code: "fk_constraint",
+      },
+      422
+    );
   }
   if (msg.includes("UNIQUE constraint failed")) {
-    return c.json({ error: msg, code: "unique_constraint" }, 409);
+    return c.json(
+      {
+        error: "El valor ya existe y debe ser unico.",
+        code: "unique_constraint",
+      },
+      409
+    );
   }
 
   console.error("[worker error]", err);
-  return c.json({ error: "Internal Server Error" }, 500);
+  return c.json({ error: "Error interno del servidor" }, 500);
 };

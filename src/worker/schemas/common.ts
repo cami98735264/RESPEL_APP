@@ -11,12 +11,15 @@ export const optionalIdSchema = z.number().int().positive().optional();
 export const isoDateTime = z
   .string()
   .refine((v) => !Number.isNaN(Date.parse(v)), {
-    message: "Invalid ISO 8601 datetime",
+    message: "Fecha y hora ISO 8601 invalida",
   });
 
 export const isoDate = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}/, "Expected YYYY-MM-DD or ISO 8601 prefix");
+  .regex(
+    /^\d{4}-\d{2}-\d{2}/,
+    "Se esperaba formato AAAA-MM-DD o prefijo ISO 8601"
+  );
 
 export const hazardCodeSchema = z.enum(HAZARD_CODES);
 export const reportPeriodSchema = z.enum(REPORT_PERIODS);
