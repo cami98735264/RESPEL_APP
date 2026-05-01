@@ -1,11 +1,11 @@
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { TriangleAlert } from "lucide-react";
+import { BellRing, ChevronRight, Scale, ShieldAlert } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { Badge } from "@/shared/ui/badge";
 import {
   Select,
   SelectContent,
@@ -13,183 +13,340 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui/select";
-
-const CARACTERISTICAS = [
-  { value: "inflamable", label: "Inflamable" },
-  { value: "corrosivo", label: "Corrosivo" },
-  { value: "reactivo", label: "Reactivo" },
-  { value: "toxico", label: "Tóxico" },
-  { value: "infeccioso", label: "Infeccioso" },
-  { value: "radiactivo", label: "Radiactivo" },
-] as const;
+import { Card, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Banner } from "@/shared/ui/banner";
+import { HazardBadge } from "@/shared/ui/hazard-badge";
+import { PageHeader } from "@/shared/layout/PageHeader";
+import { useGenerator } from "@/shared/layout/GeneratorContext";
+import { ApiError } from "@/shared/lib/api";
+import { HAZARD_CODES, type HazardCode } from "@shared/types";
+import {
+  lookupsService,
+  wasteEntriesService,
+  wastesService,
+} from "../services/residuos.service";
+import type {
+  GeneratorCategoryAlert,
+  HazardCharacteristic,
+  WasteWithHazard,
+} from "@shared/types";
 
 const entradaSchema = z.object({
   nombre: z.string().min(1, "El nombre es requerido"),
-  caracteristica: z.enum(
-    ["inflamable", "corrosivo", "reactivo", "toxico", "infeccioso", "radiactivo"],
-    { error: "Selecciona una característica" }
-  ),
-  peso: z
-    .number({ error: "Ingresa un peso válido" })
+  hazard_code: z.enum(HAZARD_CODES, { error: "Selecciona una caracteristica" }),
+  weight_kg: z
+    .number({ error: "Ingresa un peso valido" })
     .positive("El peso debe ser mayor a 0"),
 });
 
 type EntradaFormValues = z.infer<typeof entradaSchema>;
 
+const CATEGORY_LABEL: Record<number, string> = {
+  1: "Pequeno",
+  2: "Mediano",
+  3: "Grande",
+};
+
+const NUM = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
+
 export default function EntradaPage() {
+  const { generator, loading: genLoading, refresh: refreshGenerator } =
+    useGenerator();
+  const [hazards, setHazards] = useState<HazardCharacteristic[]>([]);
+  const [wastes, setWastes] = useState<WasteWithHazard[]>([]);
+  const [categoryAlert, setCategoryAlert] =
+    useState<GeneratorCategoryAlert | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitOk, setSubmitOk] = useState<string | null>(null);
+
   const {
     register,
     control,
     handleSubmit,
-    formState: { errors },
+    reset,
+    formState: { errors, isSubmitting },
   } = useForm<EntradaFormValues>({
     resolver: zodResolver(entradaSchema),
   });
 
-  function onSubmit(data: EntradaFormValues) {
-    console.log("Entrada registrada:", data);
+  useEffect(() => {
+    lookupsService.getHazardCharacteristics().then(setHazards).catch(() => {
+      setSubmitError("No se pudieron cargar las caracteristicas");
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!generator) return;
+    wastesService
+      .list({ generatorId: generator.id })
+      .then(setWastes)
+      .catch(() => {
+        /* non-fatal */
+      });
+  }, [generator]);
+
+  const totalStock = useMemo(
+    () => wastes.reduce((sum, w) => sum + w.current_stock_kg, 0),
+    [wastes],
+  );
+
+  const recentWastes = useMemo(
+    () =>
+      [...wastes]
+        .sort(
+          (a, b) =>
+            new Date(b.updated_at).getTime() -
+            new Date(a.updated_at).getTime(),
+        )
+        .slice(0, 5),
+    [wastes],
+  );
+
+  async function onSubmit(data: EntradaFormValues) {
+    if (!generator) return;
+    setSubmitError(null);
+    setSubmitOk(null);
+    try {
+      const res = await wasteEntriesService.create({
+        generator_id: generator.id,
+        name: data.nombre,
+        hazard_code: data.hazard_code as HazardCode,
+        weight_kg: data.weight_kg,
+        recorded_at: new Date().toISOString(),
+      });
+
+      setSubmitOk(
+        `Entrada registrada: ${NUM.format(data.weight_kg)} kg de "${data.nombre}".`,
+      );
+      reset();
+      if (res.categoryAlert) {
+        setCategoryAlert(res.categoryAlert);
+      }
+      const refreshed = await wastesService.list({ generatorId: generator.id });
+      setWastes(refreshed);
+      refreshGenerator();
+    } catch (err) {
+      const msg =
+        err instanceof ApiError
+          ? err.message
+          : "No se pudo registrar la entrada";
+      setSubmitError(msg);
+    }
   }
 
   return (
-    <div className="flex h-full min-h-screen">
-      {/* ── LEFT PANEL ─────────────────────────────────────── */}
-      <div className="relative hidden w-2/5 flex-col justify-between overflow-hidden bg-teal-950 p-14 select-none md:flex">
-        {/* Watermark hazard icon */}
-        <div className="pointer-events-none absolute -bottom-10 -right-10 opacity-[0.06]">
-          <TriangleAlert className="h-[420px] w-[420px] text-white" />
-        </div>
+    <div className="space-y-8">
+      <PageHeader
+        eyebrow="Operacion · Entradas"
+        title="Registrar Entrada"
+        description="Captura el residuo recibido del sensor de basculas. La categoria del generador se recalcula automaticamente."
+      />
 
-        {/* Top: brand */}
-        <div className="relative z-10">
-          <span className="text-xs font-semibold tracking-[0.2em] text-teal-400 uppercase">
-            Sistema de Gestión
-          </span>
-          <h1 className="mt-3 text-[5.5rem] leading-none font-black text-white">
-            RESPEL
-          </h1>
-          <p className="mt-5 text-lg leading-relaxed text-teal-300">
-            Control de Residuos Peligrosos
-          </p>
-          <div className="mt-8 space-y-3">
-            <div className="h-px w-10 bg-teal-700" />
-            <p className="max-w-[260px] text-sm leading-relaxed text-teal-500">
-              Registro, trazabilidad y gestión conforme a normativa CRETIB.
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+        {/* Form */}
+        <Card className="lg:col-span-3">
+          <CardHeader>
+            <CardTitle>Datos del residuo</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Decreto 4741/2005 · Caracteristicas CRETIB-R
             </p>
-          </div>
-        </div>
+          </CardHeader>
+          <div className="space-y-5 px-6 py-6">
+            {categoryAlert && (
+              <Banner
+                tone="warning"
+                title="Categoria del generador actualizada"
+                icon={BellRing}
+                onDismiss={() => setCategoryAlert(null)}
+              >
+                {CATEGORY_LABEL[categoryAlert.previous_category_id ?? 0] ??
+                  "Sin categoria previa"}{" "}
+                <ChevronRight className="inline h-3 w-3 align-middle" />{" "}
+                <span className="font-semibold">
+                  Generador{" "}
+                  {CATEGORY_LABEL[categoryAlert.new_category_id] ?? "—"}
+                </span>{" "}
+                · promedio 6m{" "}
+                <span className="tabular-figures">
+                  {NUM.format(categoryAlert.rolling_avg_kg)}
+                </span>{" "}
+                kg/mes
+              </Banner>
+            )}
 
-        {/* Bottom: legal */}
-        <p className="relative z-10 text-xs text-teal-800">
-          © 2025 RESPEL · Todos los derechos reservados
-        </p>
-      </div>
+            {submitOk && (
+              <Banner tone="success" onDismiss={() => setSubmitOk(null)}>
+                {submitOk}
+              </Banner>
+            )}
 
-      {/* ── RIGHT PANEL ────────────────────────────────────── */}
-      <div className="flex flex-1 flex-col overflow-y-auto bg-white">
-        <div className="flex flex-1 flex-col px-10 py-16 sm:px-16 lg:px-20">
-          <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
+            {submitError && (
+              <Banner tone="error" onDismiss={() => setSubmitError(null)}>
+                {submitError}
+              </Banner>
+            )}
 
-            {/* Form header */}
-            <div className="mb-10">
-              <h2 className="text-2xl font-bold tracking-tight text-gray-900">
-                Registrar Entrada
-              </h2>
-              <p className="mt-1.5 text-sm text-gray-500">
-                Complete los datos del residuo peligroso ingresante.
-              </p>
-            </div>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              <div className="space-y-1.5">
+                <Label htmlFor="nombre">Nombre del residuo</Label>
+                <Input
+                  id="nombre"
+                  placeholder="Ej. Aceite mineral usado"
+                  autoComplete="off"
+                  {...register("nombre")}
+                />
+                {errors.nombre && (
+                  <p className="text-xs text-destructive">
+                    {errors.nombre.message}
+                  </p>
+                )}
+              </div>
 
-            {/* Form */}
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="flex flex-1 flex-col"
-            >
-              <div className="flex-1 space-y-6">
-                {/* Nombre del residuo */}
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="nombre">Nombre del residuo</Label>
-                  <Input
-                    id="nombre"
-                    placeholder="Ej. Aceite mineral usado"
-                    {...register("nombre")}
-                  />
-                  {errors.nombre && (
-                    <p className="text-xs text-destructive">
-                      {errors.nombre.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Característica de peligrosidad */}
-                <div className="space-y-1.5">
-                  <Label>Característica de peligrosidad</Label>
+                  <Label>Caracteristica de peligrosidad</Label>
                   <Controller
                     control={control}
-                    name="caracteristica"
+                    name="hazard_code"
                     render={({ field }) => (
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar característica" />
+                          <SelectValue placeholder="Seleccionar" />
                         </SelectTrigger>
                         <SelectContent>
-                          {CARACTERISTICAS.map((c) => (
-                            <SelectItem key={c.value} value={c.value}>
-                              {c.label}
+                          {hazards.map((h) => (
+                            <SelectItem key={h.code} value={h.code}>
+                              {h.name_es} ({h.code})
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     )}
                   />
-                  {errors.caracteristica && (
+                  {errors.hazard_code && (
                     <p className="text-xs text-destructive">
-                      {errors.caracteristica.message}
+                      {errors.hazard_code.message}
                     </p>
                   )}
                 </div>
 
-                {/* Peso (kg) */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="peso">Peso</Label>
+                  <Label htmlFor="weight_kg">Peso</Label>
                   <div className="relative">
                     <Input
-                      id="peso"
+                      id="weight_kg"
                       type="number"
                       step="0.01"
                       min="0"
                       placeholder="0.00"
-                      className="pr-10"
-                      {...register("peso", { valueAsNumber: true })}
+                      className="pr-10 font-mono tabular-figures"
+                      {...register("weight_kg", { valueAsNumber: true })}
                     />
-                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-400">
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
                       kg
                     </span>
                   </div>
-                  {errors.peso && (
+                  {errors.weight_kg && (
                     <p className="text-xs text-destructive">
-                      {errors.peso.message}
+                      {errors.weight_kg.message}
                     </p>
                   )}
                 </div>
               </div>
 
-              <Button type="submit" className="mt-8 w-full">
-                Registrar Entrada
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={isSubmitting || genLoading || !generator}
+              >
+                {isSubmitting ? "Registrando..." : "Registrar Entrada"}
               </Button>
             </form>
-
-            {/* Summary footer */}
-            <div className="mt-8 flex items-center justify-between border-t border-gray-100 pt-5">
-              <span className="text-xs text-gray-500">
-                Stock total:{" "}
-                <span className="font-semibold text-gray-700">1,240 kg</span>
-              </span>
-              <Badge variant="secondary">Generador Pequeño</Badge>
-            </div>
           </div>
+        </Card>
+
+        {/* Side panel: live context */}
+        <div className="space-y-4 lg:col-span-2">
+          <Card>
+            <div className="flex items-start gap-4 px-6 py-5">
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Scale className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  Stock total acumulado
+                </p>
+                <p className="font-display tabular-figures mt-1.5 text-3xl font-semibold leading-none text-foreground">
+                  {NUM.format(totalStock)}{" "}
+                  <span className="font-mono text-base font-medium text-muted-foreground">
+                    kg
+                  </span>
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Generador{" "}
+                  <span className="font-medium text-foreground">
+                    {generator?.current_category_id
+                      ? CATEGORY_LABEL[generator.current_category_id] ?? "—"
+                      : "—"}
+                  </span>
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Residuos recientes</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Ultimos catalogados para este generador
+              </p>
+            </CardHeader>
+            {recentWastes.length === 0 ? (
+              <p className="px-6 py-8 text-center text-sm text-muted-foreground">
+                Sin residuos aun. La proxima entrada inaugura el catalogo.
+              </p>
+            ) : (
+              <ul className="divide-y divide-border/60">
+                {recentWastes.map((w) => (
+                  <li
+                    key={w.id}
+                    className="flex items-center justify-between gap-3 px-6 py-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {w.name}
+                      </p>
+                      <div className="mt-1">
+                        <HazardBadge
+                          code={w.hazard_code}
+                          name={w.hazard_name}
+                        />
+                      </div>
+                    </div>
+                    <span className="font-mono text-sm tabular-figures text-foreground">
+                      {NUM.format(w.current_stock_kg)}
+                      <span className="text-muted-foreground"> kg</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card className="border-dashed bg-muted/40">
+            <div className="flex gap-3 px-5 py-4">
+              <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Los pesos se redondean a 3 decimales. Si el promedio mensual
+                cruza un umbral RESPEL, la categoria del generador se
+                actualiza automaticamente.
+              </p>
+            </div>
+          </Card>
         </div>
       </div>
     </div>

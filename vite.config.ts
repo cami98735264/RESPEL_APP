@@ -11,6 +11,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			"@": `${__dirname}src/react-app`,
+			"@shared": `${__dirname}src/shared`,
 		},
 	},
 });

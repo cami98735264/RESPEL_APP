@@ -55,7 +55,12 @@
     "deploy": "wrangler deploy",
     "dev": "vite",
     "lint": "eslint .",
-    "preview": "npm run build && vite preview"
+    "preview": "npm run build && vite preview",
+    "d1:migrate:local": "wrangler d1 migrations apply respel --local",
+    "d1:migrate:remote": "wrangler d1 migrations apply respel --remote",
+    "d1:exec:local": "wrangler d1 execute respel --local --command",
+    "d1:exec:remote": "wrangler d1 execute respel --remote --command",
+    "d1:studio": "wrangler d1 studio respel"
   },
   "type": "module"
 }
