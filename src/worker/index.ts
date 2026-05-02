@@ -11,7 +11,11 @@ import wasteEntries from "./routes/wasteEntries";
 import wasteExits from "./routes/wasteExits";
 import alerts from "./routes/alerts";
 import reports from "./routes/reports";
+import realtime from "./routes/realtime";
 import { checkStorageLimits } from "./services/storageSweep";
+import { buildEvent, notify } from "./services/notify";
+
+export { NotificationHub } from "./durable/NotificationHub";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -27,6 +31,7 @@ app.route("/api/waste-entries", wasteEntries);
 app.route("/api/waste-exits", wasteExits);
 app.route("/api/alerts", alerts);
 app.route("/api/reports", reports);
+app.route("/api/realtime", realtime);
 
 export default {
   fetch: app.fetch,
@@ -35,7 +40,17 @@ export default {
       (async () => {
         await env.DB.exec("PRAGMA foreign_keys = ON");
         const created = await checkStorageLimits(env.DB);
-        console.log(`[scheduled] storage sweep created ${created} alert(s)`);
+        console.log(`[scheduled] storage sweep created ${created.length} alert(s)`);
+        for (const alert of created) {
+          await notify(
+            env,
+            buildEvent({
+              kind: "alert.storage.created",
+              generator_id: alert.generator_id,
+              payload: alert,
+            })
+          );
+        }
       })()
     );
   },

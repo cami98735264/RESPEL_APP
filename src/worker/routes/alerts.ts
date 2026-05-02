@@ -5,6 +5,7 @@ import type {
 } from "@shared/types";
 import { HttpError } from "../middleware/error";
 import { idParam } from "../schemas/common";
+import { buildEvent, notify } from "../services/notify";
 
 const alerts = new Hono<{ Bindings: Env }>();
 
@@ -43,6 +44,14 @@ alerts.post("/category/:id/acknowledge", async (c) => {
     .bind(now, id)
     .first<GeneratorCategoryAlert>();
   if (!updated) throw new HttpError(404, "Alerta no encontrada");
+  await notify(
+    c.env,
+    buildEvent({
+      kind: "alert.category.acknowledged",
+      generator_id: updated.generator_id,
+      payload: { alert_id: updated.id },
+    })
+  );
   return c.json(updated);
 });
 
@@ -79,6 +88,14 @@ alerts.post("/storage/:id/resolve", async (c) => {
     .bind(now, id)
     .first<StorageLimitAlert>();
   if (!updated) throw new HttpError(404, "Alerta no encontrada");
+  await notify(
+    c.env,
+    buildEvent({
+      kind: "alert.storage.resolved",
+      generator_id: updated.generator_id,
+      payload: { alert_id: updated.id },
+    })
+  );
   return c.json(updated);
 });
 

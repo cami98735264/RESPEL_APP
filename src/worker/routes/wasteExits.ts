@@ -48,7 +48,7 @@ wasteExits.get("/", async (c) => {
 
 wasteExits.post("/", async (c) => {
   const body = createWasteExitSchema.parse(await c.req.json());
-  const result = await insertWasteExit(c.env.DB, body);
+  const result = await insertWasteExit(c.env, body);
   return c.json(result, 201);
 });
 

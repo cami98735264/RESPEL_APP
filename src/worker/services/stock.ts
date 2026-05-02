@@ -2,6 +2,7 @@ import type { HazardCode, Waste, WasteEntry, WasteExit } from "@shared/types";
 import { HttpError } from "../middleware/error";
 import { recalculateCategory } from "./categoryRecalc";
 import type { GeneratorCategoryAlert } from "@shared/types";
+import { buildEvent, notify } from "./notify";
 
 const round3 = (n: number): number => Math.round(n * 1000) / 1000;
 const nowIso = (): string => new Date().toISOString();
@@ -79,9 +80,10 @@ export interface InsertEntryResult {
 }
 
 export async function insertWasteEntry(
-  db: D1Database,
+  env: Env,
   input: InsertEntryInput
 ): Promise<InsertEntryResult> {
+  const db = env.DB;
   const now = nowIso();
   const recordedAt = input.recorded_at ?? now;
   const weight = round3(input.weight_kg);
@@ -143,7 +145,34 @@ export async function insertWasteEntry(
     recordedAt
   );
 
-  return { entry, waste: refreshedWaste ?? waste, categoryAlert };
+  const finalWaste = refreshedWaste ?? waste;
+
+  await notify(
+    env,
+    buildEvent({
+      kind: "entry.created",
+      generator_id: input.generator_id,
+      payload: {
+        entry_id: entry.id,
+        waste_id: finalWaste.id,
+        waste_name: finalWaste.name,
+        weight_kg: weight,
+      },
+    })
+  );
+
+  if (categoryAlert) {
+    await notify(
+      env,
+      buildEvent({
+        kind: "alert.category.created",
+        generator_id: categoryAlert.generator_id,
+        payload: categoryAlert,
+      })
+    );
+  }
+
+  return { entry, waste: finalWaste, categoryAlert };
 }
 
 export interface InsertExitInput {
@@ -160,9 +189,10 @@ export interface InsertExitInput {
 }
 
 export async function insertWasteExit(
-  db: D1Database,
+  env: Env,
   input: InsertExitInput
 ): Promise<{ exit: WasteExit; waste: Waste }> {
+  const db = env.DB;
   const now = nowIso();
   const dispatchedAt = input.dispatched_at ?? now;
   const weight = round3(input.weight_kg);
@@ -249,6 +279,20 @@ export async function insertWasteExit(
     .prepare("SELECT * FROM waste WHERE id = ?")
     .bind(input.waste_id)
     .first<Waste>();
+
+  await notify(
+    env,
+    buildEvent({
+      kind: "exit.created",
+      generator_id: input.generator_id,
+      payload: {
+        exit_id: exit.id,
+        waste_id: input.waste_id,
+        weight_kg: weight,
+        receptor_id: input.receptor_id,
+      },
+    })
+  );
 
   return { exit, waste: refreshedWaste ?? waste };
 }

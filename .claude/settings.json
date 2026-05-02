@@ -65,7 +65,23 @@
       "Bash(xargs echo *)",
       "Bash(curl -sS 'https://respel-app.mashlowtm0510.workers.dev/api/receptors?active=1')",
       "Bash(npm install *)",
-      "Bash(timeout 12 sh -c 'until grep -q \"Local:\" \"/c/Users/ADMINI~1/AppData/Local/Temp/claude/c--Users-Administrador-R-Desktop-respe-app/40b781bc-9979-4731-98f6-7336642bd373/tasks/bj8mo27xo.output\" 2>/dev/null; do sleep 1; done')"
+      "Bash(timeout 12 sh -c 'until grep -q \"Local:\" \"/c/Users/ADMINI~1/AppData/Local/Temp/claude/c--Users-Administrador-R-Desktop-respe-app/40b781bc-9979-4731-98f6-7336642bd373/tasks/bj8mo27xo.output\" 2>/dev/null; do sleep 1; done')",
+      "Bash(curl -s -o /dev/null -w \"GET /=%{http_code}\\\\nGET /gestores=%{http_code}\\\\n\" http://localhost:5175/)",
+      "Bash(curl -s -o /dev/null -w \"GET /api/receptors=%{http_code}\\\\n\" http://localhost:5175/api/receptors)",
+      "Bash(curl -s http://localhost:5175/api/receptors)",
+      "Bash(curl -s -X POST -H \"Content-Type: application/json\" -d '{\"legal_name\":\"Gestor de Prueba\",\"nit\":\"999111222-3\",\"license_number\":\"LIC-TEST-001\",\"license_expiry\":\"2027-06-15\",\"contact_email\":\"prueba@gestor.test\",\"authority_id\":1,\"is_active\":1}' http://localhost:5175/api/receptors)",
+      "Bash(curl -s -X POST -H \"Content-Type: application/json\" -d '{\"legal_name\":\"Solo nombre\"}' http://localhost:5175/api/receptors)",
+      "Bash(curl -s http://localhost:5175/api/wastes/99999)",
+      "Bash(curl -s http://localhost:5175/api/receptors/99999)",
+      "Bash(curl -s -X PATCH -H \"Content-Type: application/json\" -d '{\"contact_phone\":\"+57 311 999 8888\"}' http://localhost:5175/api/receptors/2)",
+      "Bash(curl -s -X PATCH -H \"Content-Type: application/json\" -d '{\"is_active\":0}' http://localhost:5175/api/receptors/2)",
+      "Bash(curl -s 'http://localhost:5175/api/receptors?active=1')",
+      "Bash(curl -s -X PATCH -H \"Content-Type: application/json\" -d '{\"is_active\":1}' http://localhost:5175/api/receptors/2)",
+      "Bash(curl -s -X DELETE http://localhost:5175/api/receptors/2 -o /dev/null -w \"DELETE status=%{http_code}\\\\n\")",
+      "Bash(taskkill //F //FI \"WINDOWTITLE eq C:\\\\\\\\Windows\\\\\\\\System32\\\\\\\\cmd.exe*\")",
+      "Bash(ps -W)",
+      "Bash(awk '{print $1}')",
+      "Bash(xargs -I {} taskkill //F //PID {})"
     ]
   }
 }

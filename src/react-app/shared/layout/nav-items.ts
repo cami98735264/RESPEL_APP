@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   Boxes,
   FileBarChart2,
   LayoutDashboard,
@@ -20,6 +21,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/salida", label: "Salida", icon: Truck },
   { to: "/residuos", label: "Stock", icon: Boxes },
   { to: "/gestores", label: "Gestores", icon: Users },
+  { to: "/alertas", label: "Alertas", icon: AlertTriangle },
   { to: "/reportes", label: "Reportes", icon: FileBarChart2 },
 ];
 

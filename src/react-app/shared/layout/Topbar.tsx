@@ -8,6 +8,7 @@ const ROUTE_LABELS: Record<string, string> = {
   salida: "Registrar Salida",
   residuos: "Residuos en Stock",
   gestores: "Gestores Autorizados",
+  alertas: "Alertas",
   reportes: "Reportes",
 };
 

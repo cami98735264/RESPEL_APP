@@ -44,7 +44,7 @@ wasteEntries.get("/", async (c) => {
 
 wasteEntries.post("/", async (c) => {
   const body = createWasteEntrySchema.parse(await c.req.json());
-  const result = await insertWasteEntry(c.env.DB, body);
+  const result = await insertWasteEntry(c.env, body);
   return c.json(result, 201);
 });
 

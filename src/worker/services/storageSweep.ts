@@ -1,6 +1,10 @@
+import type { StorageLimitAlert } from "@shared/types";
+
 const nowIso = (): string => new Date().toISOString();
 
-export async function checkStorageLimits(db: D1Database): Promise<number> {
+export async function checkStorageLimits(
+  db: D1Database
+): Promise<StorageLimitAlert[]> {
   const now = nowIso();
 
   const candidates = await db
@@ -26,18 +30,20 @@ export async function checkStorageLimits(db: D1Database): Promise<number> {
     }>();
 
   const rows = candidates.results ?? [];
-  if (rows.length === 0) return 0;
+  if (rows.length === 0) return [];
 
-  await db.batch(
-    rows.map((row) =>
-      db
-        .prepare(
-          `INSERT INTO storage_limit_alert
-            (waste_id, generator_id, first_entry_at, deadline_date, alerted_at)
-           VALUES (?, ?, ?, ?, ?)`
-        )
-        .bind(row.waste_id, row.generator_id, row.first_entry_at, row.deadline_date, now)
-    )
-  );
-  return rows.length;
+  const inserted: StorageLimitAlert[] = [];
+  for (const row of rows) {
+    const created = await db
+      .prepare(
+        `INSERT INTO storage_limit_alert
+          (waste_id, generator_id, first_entry_at, deadline_date, alerted_at)
+         VALUES (?, ?, ?, ?, ?)
+         RETURNING *`
+      )
+      .bind(row.waste_id, row.generator_id, row.first_entry_at, row.deadline_date, now)
+      .first<StorageLimitAlert>();
+    if (created) inserted.push(created);
+  }
+  return inserted;
 }
