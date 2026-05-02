@@ -23,8 +23,7 @@ interface AlertDetails extends ProjectedCategoryAlert {
 const nowIso = (): string => new Date().toISOString();
 
 function isEnabled(env: WhatsAppRuntimeEnv): boolean {
-  if (env.WHATSAPP_ALERTS_ENABLED === "1") return true;
-  return hasTwilioConfig(env);
+  return env.WHATSAPP_ALERTS_ENABLED === "1";
 }
 
 function hasTwilioConfig(env: WhatsAppRuntimeEnv): boolean {
