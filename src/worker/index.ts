@@ -14,6 +14,7 @@ import reports from "./routes/reports";
 import realtime from "./routes/realtime";
 import { checkStorageLimits } from "./services/storageSweep";
 import { buildEvent, notify } from "./services/notify";
+import { processWhatsAppAlertBatch, type WhatsAppRuntimeEnv } from "./services/whatsapp";
 
 export { NotificationHub } from "./durable/NotificationHub";
 
@@ -35,6 +36,12 @@ app.route("/api/realtime", realtime);
 
 export default {
   fetch: app.fetch,
+  async queue(batch: MessageBatch<unknown>, env: Env & WhatsAppRuntimeEnv) {
+    await processWhatsAppAlertBatch(
+      batch as MessageBatch<{ alertId: number }>,
+      env
+    );
+  },
   async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(
       (async () => {

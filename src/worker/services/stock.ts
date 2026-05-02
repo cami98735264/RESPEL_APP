@@ -1,8 +1,16 @@
 import type { HazardCode, Waste, WasteEntry, WasteExit } from "@shared/types";
 import { HttpError } from "../middleware/error";
 import { recalculateCategory } from "./categoryRecalc";
-import type { GeneratorCategoryAlert } from "@shared/types";
+import type {
+  GeneratorCategoryAlert,
+  ProjectedCategoryAlert,
+} from "@shared/types";
 import { buildEvent, notify } from "./notify";
+import { createProjectedCategoryAlert } from "./projectedCategoryAlert";
+import {
+  deliverProjectedCategoryWhatsAppAlert,
+  type WhatsAppRuntimeEnv,
+} from "./whatsapp";
 
 const round3 = (n: number): number => Math.round(n * 1000) / 1000;
 const nowIso = (): string => new Date().toISOString();
@@ -77,10 +85,11 @@ export interface InsertEntryResult {
   entry: WasteEntry;
   waste: Waste;
   categoryAlert: GeneratorCategoryAlert | null;
+  projectedCategoryAlert: ProjectedCategoryAlert | null;
 }
 
 export async function insertWasteEntry(
-  env: Env,
+  env: Env & WhatsAppRuntimeEnv,
   input: InsertEntryInput
 ): Promise<InsertEntryResult> {
   const db = env.DB;
@@ -144,6 +153,11 @@ export async function insertWasteEntry(
     input.generator_id,
     recordedAt
   );
+  const projectedCategoryAlert = await createProjectedCategoryAlert(
+    db,
+    input.generator_id,
+    recordedAt
+  );
 
   const finalWaste = refreshedWaste ?? waste;
 
@@ -172,7 +186,28 @@ export async function insertWasteEntry(
     );
   }
 
-  return { entry, waste: finalWaste, categoryAlert };
+  if (projectedCategoryAlert) {
+    await notify(
+      env,
+      buildEvent({
+        kind: "alert.category.projected.created",
+        generator_id: projectedCategoryAlert.generator_id,
+        payload: projectedCategoryAlert,
+      })
+    );
+    try {
+      await deliverProjectedCategoryWhatsAppAlert(env, projectedCategoryAlert.id);
+    } catch (error) {
+      console.error("[whatsapp] immediate delivery failed", error);
+    }
+  }
+
+  return {
+    entry,
+    waste: finalWaste,
+    categoryAlert,
+    projectedCategoryAlert,
+  };
 }
 
 export interface InsertExitInput {

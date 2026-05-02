@@ -118,6 +118,15 @@ body::before {
   letter-spacing: -0.01em;
 }
 
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
 table,
 .tabular-figures {
   font-variant-numeric: tabular-nums;

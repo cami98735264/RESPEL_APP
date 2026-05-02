@@ -41,6 +41,18 @@ export function formatEvent(event: RealtimeEvent): FormattedEvent {
         href: `/alertas?tipo=categoria&id=${a.id}`,
       };
     }
+    case "alert.category.projected.created": {
+      const a = event.payload;
+      return {
+        id: event.id,
+        ts: event.ts,
+        kind: event.kind,
+        title: "Nueva alerta preventiva de categoría",
+        body: `Promedio proyectado ${fmtKg(a.projected_rolling_avg_kg)} y exceso de ${fmtKg(a.exceeded_by_kg)} sobre el umbral.`,
+        tone: "warning",
+        href: `/alertas?tipo=categoria-proyectada&id=${a.id}`,
+      };
+    }
     case "alert.storage.created": {
       const a = event.payload;
       return {
@@ -62,6 +74,16 @@ export function formatEvent(event: RealtimeEvent): FormattedEvent {
         body: `La alerta #${event.payload.alert_id} fue marcada como atendida.`,
         tone: "success",
         href: "/alertas?tipo=categoria",
+      };
+    case "alert.category.projected.acknowledged":
+      return {
+        id: event.id,
+        ts: event.ts,
+        kind: event.kind,
+        title: "Alerta preventiva atendida",
+        body: `La alerta #${event.payload.alert_id} fue marcada como atendida.`,
+        tone: "success",
+        href: "/alertas?tipo=categoria-proyectada",
       };
     case "alert.storage.resolved":
       return {

@@ -1,49 +1,74 @@
-/**
- * For more details on how to configure Wrangler, refer to:
- * https://developers.cloudflare.com/workers/wrangler/configuration/
- */
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "respel-app",
-	"main": "./src/worker/index.ts",
-	"compatibility_date": "2025-10-08",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"observability": {
-		"enabled": true
-	},
-	"upload_source_maps": true,
-	"assets": {
-		"directory": "./dist/client",
-		"not_found_handling": "single-page-application"
-	},
-	"d1_databases": [
-		{
-			"binding": "DB",
-			"database_name": "respel",
-			"database_id": "3b532b02-a48e-423a-addd-acb1e69129f3",
-			"migrations_dir": "migrations"
-		}
-	],
-	"durable_objects": {
-		"bindings": [
-			{
-				"name": "NOTIFICATION_HUB",
-				"class_name": "NotificationHub"
-			}
-		]
-	},
-	"migrations": [
-		{
-			"tag": "v1",
-			"new_sqlite_classes": ["NotificationHub"]
-		}
-	],
-	"vars": {
-		"DEFAULT_GENERATOR_ID": "1"
-	},
-	"triggers": {
-		"crons": ["0 4 * * *"]
-	}
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "respel-app",
+  "main": "./src/worker/index.ts",
+  "compatibility_date": "2025-10-08",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "upload_source_maps": true,
+  "assets": {
+    "directory": "./dist/client",
+    "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "respel",
+      "database_id": "5a89b8f5-a15e-4371-84de-9cf5901b2830",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "NOTIFICATION_HUB",
+        "class_name": "NotificationHub"
+      }
+    ]
+  },
+  "queues": {
+    "producers": [
+      {
+        "queue": "respel-whatsapp-alerts",
+        "binding": "WHATSAPP_ALERTS_QUEUE"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "respel-whatsapp-alerts",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_retries": 3
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "NotificationHub"
+      ]
+    }
+  ],
+  "vars": {
+    "DEFAULT_GENERATOR_ID": "1",
+    "WHATSAPP_ALERTS_ENABLED": "1",
+    "ALERT_WHATSAPP_TO": "whatsapp:+573167821687"
+  },
+  "secrets": {
+    "required": [
+      "TWILIO_ACCOUNT_SID",
+      "TWILIO_AUTH_TOKEN",
+      "TWILIO_WHATSAPP_FROM"
+    ]
+  },
+  "triggers": {
+    "crons": [
+      "0 4 * * *"
+    ]
+  }
 }

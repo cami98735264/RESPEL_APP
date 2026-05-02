@@ -9,6 +9,7 @@ DELETE FROM waste_exit;
 DELETE FROM waste_entry;
 DELETE FROM storage_limit_alert;
 DELETE FROM generator_category_alert;
+DELETE FROM projected_category_alert;
 DELETE FROM waste;
 
 -- Tenant-style rows that get re-seeded below

@@ -120,6 +120,26 @@ export interface GeneratorCategoryAlert {
   acknowledged_at: string | null;
 }
 
+export interface ProjectedCategoryAlert {
+  id: number;
+  generator_id: number;
+  current_category_id: number | null;
+  projected_category_id: number;
+  trigger_month: string;
+  month_total_kg: number;
+  projected_rolling_avg_kg: number;
+  threshold_kg: number;
+  exceeded_by_kg: number;
+  created_at: string;
+  acknowledged: 0 | 1;
+  acknowledged_at: string | null;
+  whatsapp_status: "pending" | "sent" | "failed" | "skipped";
+  whatsapp_attempted_at: string | null;
+  whatsapp_sent_at: string | null;
+  whatsapp_provider_id: string | null;
+  whatsapp_last_error: string | null;
+}
+
 export interface StorageLimitAlert {
   id: number;
   waste_id: number;
@@ -199,6 +219,7 @@ export interface CreateWasteEntryResponse {
   entry: WasteEntry;
   waste: Waste;
   categoryAlert: GeneratorCategoryAlert | null;
+  projectedCategoryAlert: ProjectedCategoryAlert | null;
 }
 
 export interface CreateWasteExitDto {

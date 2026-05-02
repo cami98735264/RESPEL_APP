@@ -1,6 +1,7 @@
 import { api } from "@/shared/lib/api";
 import type {
   GeneratorCategoryAlert,
+  ProjectedCategoryAlert,
   StorageLimitAlert,
 } from "@shared/types";
 
@@ -25,9 +26,24 @@ export const alertasService = {
       `/alerts/storage${qs ? `?${qs}` : ""}`
     );
   },
+  listProjectedCategory: (params?: { unack?: boolean; generatorId?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.unack) query.set("unack", "1");
+    if (params?.generatorId != null)
+      query.set("generator_id", String(params.generatorId));
+    const qs = query.toString();
+    return api.get<ProjectedCategoryAlert[]>(
+      `/alerts/projected-category${qs ? `?${qs}` : ""}`
+    );
+  },
   acknowledgeCategory: (id: number) =>
     api.post<GeneratorCategoryAlert>(
       `/alerts/category/${id}/acknowledge`,
+      {}
+    ),
+  acknowledgeProjectedCategory: (id: number) =>
+    api.post<ProjectedCategoryAlert>(
+      `/alerts/projected-category/${id}/acknowledge`,
       {}
     ),
   resolveStorage: (id: number) =>

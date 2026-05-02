@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type {
   GeneratorCategoryAlert,
+  ProjectedCategoryAlert,
   StorageLimitAlert,
 } from "@shared/types";
 import { HttpError } from "../middleware/error";
@@ -48,6 +49,50 @@ alerts.post("/category/:id/acknowledge", async (c) => {
     c.env,
     buildEvent({
       kind: "alert.category.acknowledged",
+      generator_id: updated.generator_id,
+      payload: { alert_id: updated.id },
+    })
+  );
+  return c.json(updated);
+});
+
+alerts.get("/projected-category", async (c) => {
+  const unack = c.req.query("unack") === "1";
+  const generatorId = c.req.query("generator_id");
+
+  const filters: string[] = [];
+  const binds: (string | number)[] = [];
+  if (unack) filters.push("acknowledged = 0");
+  if (generatorId) {
+    filters.push("generator_id = ?");
+    binds.push(Number(generatorId));
+  }
+  const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+
+  const { results } = await c.env.DB.prepare(
+    `SELECT * FROM projected_category_alert ${where} ORDER BY created_at DESC`
+  )
+    .bind(...binds)
+    .all<ProjectedCategoryAlert>();
+  return c.json(results ?? []);
+});
+
+alerts.post("/projected-category/:id/acknowledge", async (c) => {
+  const { id } = idParam.parse(c.req.param());
+  const now = nowIso();
+  const updated = await c.env.DB.prepare(
+    `UPDATE projected_category_alert
+     SET acknowledged = 1, acknowledged_at = ?
+     WHERE id = ?
+     RETURNING *`
+  )
+    .bind(now, id)
+    .first<ProjectedCategoryAlert>();
+  if (!updated) throw new HttpError(404, "Alerta no encontrada");
+  await notify(
+    c.env,
+    buildEvent({
+      kind: "alert.category.projected.acknowledged",
       generator_id: updated.generator_id,
       payload: { alert_id: updated.id },
     })

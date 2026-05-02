@@ -39,7 +39,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1 px-3">
+      <nav className="scrollbar-hidden flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3">
         <p className="px-3 pb-2 pt-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[hsl(var(--sidebar-muted))]">
           Operacion
         </p>
@@ -63,7 +63,7 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="border-t border-[hsl(var(--sidebar-border))] px-5 py-5">
+      <div className="shrink-0 border-t border-[hsl(var(--sidebar-border))] px-5 py-5">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[hsl(var(--sidebar-muted))]">
           Generador activo
         </p>
@@ -77,7 +77,7 @@ export function Sidebar() {
         )}
         <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-active)/0.6)] px-2.5 py-1 text-[11px]">
           <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--accent))]" />
-          <span className="font-medium text-sidebar-foreground">
+          <span className="font-medium leading-none text-sidebar-foreground">
             {generator?.current_category_id
               ? `Generador ${CATEGORY_LABEL[generator.current_category_id] ?? "—"}`
               : "Sin categoria"}

@@ -8,6 +8,7 @@ import {
   Clock,
   Eye,
   Layers,
+  MessageSquareWarning,
   RefreshCcw,
   Scale,
 } from "lucide-react";
@@ -42,21 +43,28 @@ const formatDate = (iso: string | null) => {
   }
 };
 
-type Tab = "categoria" | "almacenamiento";
+type Tab = "categoria" | "categoria-proyectada" | "almacenamiento";
 
 export default function AlertasPage() {
   const {
     category,
+    projectedCategory,
     storage,
     loading,
     error,
     refresh,
     acknowledgeCategory,
+    acknowledgeProjectedCategory,
     resolveStorage,
   } = useAlertasFeed();
   const [searchParams, setSearchParams] = useSearchParams();
+  const tipo = searchParams.get("tipo");
   const initialTab: Tab =
-    searchParams.get("tipo") === "almacenamiento" ? "almacenamiento" : "categoria";
+    tipo === "almacenamiento"
+      ? "almacenamiento"
+      : tipo === "categoria-proyectada"
+        ? "categoria-proyectada"
+        : "categoria";
   const [tab, setTab] = useState<Tab>(initialTab);
   const [selected, setSelected] = useState<SelectedAlert | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -72,6 +80,12 @@ export default function AlertasPage() {
         setSelected({ type: "category", alert: found });
         setDrawerOpen(true);
       }
+    } else if (tab === "categoria-proyectada") {
+      const found = projectedCategory.find((a) => a.id === id);
+      if (found) {
+        setSelected({ type: "projected-category", alert: found });
+        setDrawerOpen(true);
+      }
     } else {
       const found = storage.find((a) => a.id === id);
       if (found) {
@@ -80,17 +94,19 @@ export default function AlertasPage() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, tab, category.length, storage.length]);
+  }, [searchParams, tab, category.length, projectedCategory.length, storage.length]);
 
   const stats = useMemo(() => {
     const unack = category.filter((a) => a.acknowledged === 0).length;
+    const projected = projectedCategory.filter((a) => a.acknowledged === 0).length;
     const open = storage.filter((a) => a.resolved === 0).length;
     return {
       unack,
+      projected,
       open,
-      total: unack + open,
+      total: unack + projected + open,
     };
-  }, [category, storage]);
+  }, [category, projectedCategory, storage]);
 
   const switchTab = (next: Tab) => {
     setTab(next);
@@ -142,6 +158,13 @@ export default function AlertasPage() {
           hint={`${category.length} en historial`}
         />
         <StatCard
+          label="Preventivas abiertas"
+          value={stats.projected}
+          icon={MessageSquareWarning}
+          tone={stats.projected > 0 ? "warning" : "default"}
+          hint={`${projectedCategory.length} en historial`}
+        />
+        <StatCard
           label="Almacenamiento abierto"
           value={stats.open}
           icon={CalendarClock}
@@ -163,6 +186,21 @@ export default function AlertasPage() {
               className="ml-2 h-5 min-w-[20px] justify-center bg-amber-600 px-1.5 text-[10px]"
             >
               {stats.unack}
+            </Badge>
+          )}
+        </TabButton>
+        <TabButton
+          active={tab === "categoria-proyectada"}
+          onClick={() => switchTab("categoria-proyectada")}
+        >
+          <MessageSquareWarning className="mr-1.5 h-4 w-4" />
+          Preventivas
+          {stats.projected > 0 && (
+            <Badge
+              variant="default"
+              className="ml-2 h-5 min-w-[20px] justify-center bg-orange-600 px-1.5 text-[10px]"
+            >
+              {stats.projected}
             </Badge>
           )}
         </TabButton>
@@ -283,6 +321,104 @@ export default function AlertasPage() {
             </div>
           </Card>
         )
+      ) : tab === "categoria-proyectada" ? (
+        projectedCategory.length === 0 ? (
+          <EmptyState
+            icon={CheckCircle2}
+            title="Sin alertas preventivas"
+            description="No hay proyecciones activas de cambio de categoría."
+          />
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Alertas preventivas de categoría</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                {projectedCategory.length} alerta{projectedCategory.length === 1 ? "" : "s"} en historial
+              </p>
+            </CardHeader>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/40 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                  <tr>
+                    <th className="px-6 py-3 text-left">Mes</th>
+                    <th className="px-6 py-3 text-left">Proyección</th>
+                    <th className="px-6 py-3 text-left">Acumulado</th>
+                    <th className="px-6 py-3 text-left">Exceso</th>
+                    <th className="px-6 py-3 text-left">WhatsApp</th>
+                    <th className="px-6 py-3 text-left">Estado</th>
+                    <th className="px-6 py-3 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {projectedCategory.map((a) => (
+                    <tr
+                      key={a.id}
+                      className={
+                        a.acknowledged === 0
+                          ? "transition-colors hover:bg-muted/30"
+                          : "bg-muted/10 text-muted-foreground"
+                      }
+                    >
+                      <td className="px-6 py-3 font-mono text-xs tabular-figures text-foreground">
+                        {a.trigger_month}
+                      </td>
+                      <td className="px-6 py-3 text-foreground">
+                        {a.current_category_id ?? "—"} → {a.projected_category_id}
+                      </td>
+                      <td className="px-6 py-3 font-mono text-xs tabular-figures text-foreground">
+                        {NUM.format(a.month_total_kg)} kg
+                      </td>
+                      <td className="px-6 py-3 font-mono text-xs tabular-figures text-foreground">
+                        <span className="inline-flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3 text-orange-600" />
+                          {NUM.format(a.exceeded_by_kg)} kg/mes
+                        </span>
+                      </td>
+                      <td className="px-6 py-3 text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-1">
+                          <MessageSquareWarning className="h-3 w-3" />
+                          {a.whatsapp_status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3">
+                        {a.acknowledged === 1 ? (
+                          <Badge
+                            variant="outline"
+                            className="border-emerald-500/40 text-emerald-700"
+                          >
+                            <CheckCircle2 className="mr-1 h-3 w-3" />
+                            Atendida
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="border-orange-500/40 text-orange-700"
+                          >
+                            <AlertTriangle className="mr-1 h-3 w-3" />
+                            Preventiva
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-6 py-3 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            openDetail({ type: "projected-category", alert: a })
+                          }
+                          className="gap-1.5"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          Ver detalle
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )
       ) : storage.length === 0 ? (
         <EmptyState
           icon={CheckCircle2}
@@ -382,6 +518,7 @@ export default function AlertasPage() {
         }}
         selected={selected}
         onAcknowledgeCategory={acknowledgeCategory}
+        onAcknowledgeProjectedCategory={acknowledgeProjectedCategory}
         onResolveStorage={resolveStorage}
       />
     </div>

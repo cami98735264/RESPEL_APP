@@ -1,5 +1,6 @@
 import type {
   GeneratorCategoryAlert,
+  ProjectedCategoryAlert,
   StorageLimitAlert,
 } from "./domain";
 
@@ -15,7 +16,15 @@ export type RealtimeEvent =
       payload: GeneratorCategoryAlert;
     })
   | (RealtimeEventBase & {
+      kind: "alert.category.projected.created";
+      payload: ProjectedCategoryAlert;
+    })
+  | (RealtimeEventBase & {
       kind: "alert.category.acknowledged";
+      payload: { alert_id: number };
+    })
+  | (RealtimeEventBase & {
+      kind: "alert.category.projected.acknowledged";
       payload: { alert_id: number };
     })
   | (RealtimeEventBase & {
