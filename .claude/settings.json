@@ -81,7 +81,24 @@
       "Bash(taskkill //F //FI \"WINDOWTITLE eq C:\\\\\\\\Windows\\\\\\\\System32\\\\\\\\cmd.exe*\")",
       "Bash(ps -W)",
       "Bash(awk '{print $1}')",
-      "Bash(xargs -I {} taskkill //F //PID {})"
+      "Bash(xargs -I {} taskkill //F //PID {})",
+      "Bash(curl -s http://127.0.0.1:8788/api/realtime/snapshot)",
+      "Bash(curl -s -X POST http://127.0.0.1:8788/api/waste-entries -H \"Content-Type: application/json\" -d '{\"generator_id\":1,\"name\":\"Smoke Test Waste\",\"hazard_code\":\"H6.1\",\"weight_kg\":1.5}')",
+      "Bash(curl -s -X POST http://127.0.0.1:8788/api/waste-entries -H \"Content-Type: application/json\" -d '{\"generator_id\":1,\"name\":\"Smoke Test Waste\",\"hazard_code\":\"TO\",\"weight_kg\":1.5}')",
+      "Bash(curl -s -i -H \"Connection: Upgrade\" -H \"Upgrade: websocket\" -H \"Sec-WebSocket-Version: 13\" -H \"Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\" http://127.0.0.1:8788/api/realtime/ws --max-time 3)",
+      "Bash(curl -s \"http://127.0.0.1:8788/cdn-cgi/handler/scheduled\")",
+      "Bash(curl -s http://127.0.0.1:8788/api/alerts/storage)",
+      "Bash(curl -s -X POST http://127.0.0.1:8788/api/alerts/storage/1/resolve -H \"Content-Type: application/json\" -d '{}')",
+      "Bash(curl -s -X POST http://127.0.0.1:8788/api/waste-entries -H \"Content-Type: application/json\" -d '{\"generator_id\":1,\"name\":\"Smoke 2\",\"hazard_code\":\"TO\",\"weight_kg\":2}')",
+      "Bash(curl -s -X POST http://127.0.0.1:8788/api/waste-entries -H \"Content-Type: application/json\" -d '{\"generator_id\":1,\"name\":\"Smoke 3\",\"hazard_code\":\"TO\",\"weight_kg\":3}')",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'count={len\\(d[\\\\\"events\\\\\"]\\)}'\\); [print\\(e['kind'],e['ts']\\) for e in d['events']]\")",
+      "Bash(curl -s -X POST http://127.0.0.1:8788/api/waste-entries -H \"Content-Type: application/json\" -d '{\"generator_id\":1,\"name\":\"Smoke 4\",\"hazard_code\":\"TO\",\"weight_kg\":4}')",
+      "Bash(curl -s -X POST http://127.0.0.1:8788/api/waste-entries -H \"Content-Type: application/json\" -d '{\"generator_id\":1,\"name\":\"Smoke 5\",\"hazard_code\":\"TO\",\"weight_kg\":5}')",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'count={len\\(d[\\\\\"events\\\\\"]\\)}'\\)\")",
+      "Bash(curl -s https://respel-app.mashlowtm0510.workers.dev/api/realtime/snapshot)",
+      "Bash(curl -s -X POST https://respel-app.mashlowtm0510.workers.dev/api/waste-entries -H \"Content-Type: application/json\" -d '{\"generator_id\":1,\"name\":\"Prod Smoke\",\"hazard_code\":\"TO\",\"weight_kg\":1.1}')",
+      "Bash(curl -s -X POST https://respel-app.mashlowtm0510.workers.dev/api/waste-entries -H \"Content-Type: application/json\" -d '{\"generator_id\":1,\"name\":\"Prod Smoke 2\",\"hazard_code\":\"TO\",\"weight_kg\":2.2}')",
+      "Bash(curl -s -i -H \"Connection: Upgrade\" -H \"Upgrade: websocket\" -H \"Sec-WebSocket-Version: 13\" -H \"Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\" https://respel-app.mashlowtm0510.workers.dev/api/realtime/ws --max-time 5)"
     ]
   }
 }

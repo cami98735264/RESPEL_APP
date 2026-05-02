@@ -47,7 +47,7 @@ export class NotificationHub extends DurableObject<Env> {
     }
   }
 
-  async webSocketClose(ws: WebSocket, code: number, _reason: string, _wasClean: boolean): Promise<void> {
+  async webSocketClose(ws: WebSocket, code: number): Promise<void> {
     try {
       ws.close(code, "client closed");
     } catch {
@@ -55,7 +55,7 @@ export class NotificationHub extends DurableObject<Env> {
     }
   }
 
-  async webSocketError(_ws: WebSocket, _err: unknown): Promise<void> {
+  async webSocketError(): Promise<void> {
     /* no-op */
   }
 

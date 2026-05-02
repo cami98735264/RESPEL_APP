@@ -24,6 +24,7 @@ import {
   wasteExitsService,
   wastesService,
 } from "@/features/residuos/services/residuos.service";
+import { useRealtime } from "@/shared/realtime";
 import type {
   StorageLimitAlert,
   WasteEntry,
@@ -56,6 +57,7 @@ export default function DashboardPage() {
   const [exits, setExits] = useState<WasteExit[]>([]);
   const [storageAlerts, setStorageAlerts] = useState<StorageLimitAlert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
     if (!generator) return;
@@ -80,7 +82,19 @@ export default function DashboardPage() {
     return () => {
       alive = false;
     };
-  }, [generator]);
+  }, [generator, refreshTick]);
+
+  useRealtime((event, meta) => {
+    if (meta.replay) return;
+    switch (event.kind) {
+      case "entry.created":
+      case "exit.created":
+      case "alert.storage.created":
+      case "alert.storage.resolved":
+        setRefreshTick((n) => n + 1);
+        break;
+    }
+  }, []);
 
   const wasteById = useMemo(() => {
     const map = new Map<number, WasteWithHazard>();
